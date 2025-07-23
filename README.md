@@ -112,6 +112,12 @@ etoro portfolio
 # Save results to a file
 etoro portfolio --user johnsmith123 --save portfolio.json
 
+# Save with absolute path
+etoro portfolio --user johnsmith123 --save /path/to/portfolio.json
+
+# Save in current directory (relative path)
+etoro portfolio --user johnsmith123 --save ./results/portfolio.json
+
 # Different output formats
 etoro portfolio --user johnsmith123 --output json
 etoro portfolio --user johnsmith123 --output csv
@@ -146,6 +152,32 @@ source ~/.bashrc  # or source ~/.zshrc
 ```
 
 ## 📊 Output Formats
+
+### File Output Behavior
+
+When using the `--save` option, files are saved relative to your **current working directory**:
+
+```bash
+# Save in current directory
+etoro portfolio --user johnsmith123 --save portfolio.json
+# Creates: ./portfolio.json
+
+# Save in a subdirectory (must exist)
+etoro portfolio --user johnsmith123 --save results/portfolio.json  
+# Creates: ./results/portfolio.json
+
+# Save with absolute path
+etoro portfolio --user johnsmith123 --save /home/user/Documents/portfolio.json
+# Creates: /home/user/Documents/portfolio.json
+
+# Check where files are saved
+pwd  # Shows current directory where relative paths will be created
+```
+
+**Important Notes:**
+- Directories in the path must already exist (the command won't create them)
+- If no path is specified, the file is created in your current working directory
+- Both relative and absolute paths are supported
 
 ### Table Format (Default)
 
@@ -367,6 +399,28 @@ Error: Could not start Chrome browser
 2. **Profile not found**: Check if the username is correct and profile is public
 3. **Timeout errors**: Increase `BROWSER_TIMEOUT` in `.env` file
 4. **CAPTCHA challenges**: eToro may show CAPTCHA - this is expected behavior
+5. **File not found when saving**: Ensure the directory exists before using `--save path/to/file.json`
+
+#### 3. File Output Issues
+
+**Problem**: "No such file or directory" when saving results
+```bash
+etoro portfolio --user johnsmith123 --save results/portfolio.json
+# Error if 'results' directory doesn't exist
+```
+
+**Solutions**:
+```bash
+# Create directory first
+mkdir -p results
+etoro portfolio --user johnsmith123 --save results/portfolio.json
+
+# Or use current directory
+etoro portfolio --user johnsmith123 --save portfolio.json
+
+# Or use absolute path
+etoro portfolio --user johnsmith123 --save /tmp/portfolio.json
+```
 
 ### Debug Mode
 

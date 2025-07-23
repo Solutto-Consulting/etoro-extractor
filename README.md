@@ -148,33 +148,78 @@ source ~/.bashrc  # or source ~/.zshrc
 
 ```
 Portfolio for: gilsonrincon1982
-Total Assets: 8
+Total Assets: 16
 Last Updated: 23/07/2025
 --------------------------------------------------------------------------------
-Asset Name                     | Allocation %    | Value          | P&L           
---------------------------------------------------------------------------------
-AI-Edge                       | 74.53%          | 77.26%         | 16.13%        
-GoldWorldwide                 | 5.95%           | 5.48%          | 3.86%         
-The-Chameleon                 | 5.46%           | 4.89%          | 0.95%         
+Asset Name     
+---------------
+AI-Edge        
+GoldWorldWide  
+The-Chameleon  
+LLY            
+ENGI.PA        
+BKR            
+MC.PA          
+ETOR           
+UNH            
+CNU.ASX        
+MELI           
+RHM.DE         
+CRWD           
+C              
+BG             
+GPRK           
 ```
 
 ### JSON Format
 
+The JSON output provides comprehensive portfolio data:
+
 ```json
 {
   "user": "gilsonrincon1982",
-  "last_updated": "23/07/2025",
-  "total_assets": 8,
+  "last_updated": "23/07/2025", 
+  "total_assets": 16,
+  "balance_percentage": "0%",
   "assets": [
     {
       "name": "AI-Edge",
-      "percentage": "74.53%",
-      "value": "77.26%",
-      "profit_loss": "16.13%"
+      "description": "AI-Edge Capital Guarantee",
+      "invested_percentage": "74.53%",
+      "profit_loss_percentage": "16.13%",
+      "profit_loss_status": "positive",
+      "value_percentage": "77.26%",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/avatars/150X150/42731987/1.jpg",
+      "alt_text": "AI-Edge"
+    },
+    {
+      "name": "LLY", 
+      "description": "Eli Lilly & Co",
+      "direction": "Long",
+      "invested_percentage": "2.43%",
+      "profit_loss_percentage": "-2.28%",
+      "profit_loss_status": "negative",
+      "value_percentage": "2.08%",
+      "sell_price": "775.85",
+      "buy_price": "776.48",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/1567/1567_BB271A_F7F7F7.svg",
+      "alt_text": "LLY"
     }
   ]
 }
 ```
+
+**Data Fields Explained:**
+- `name`: Asset symbol or trader name
+- `description`: Company name for stocks, strategy name for traders
+- `direction`: Trading position (Long/Short) - only for individual stocks
+- `invested_percentage`: Percentage of total portfolio invested in this asset
+- `profit_loss_percentage`: Current profit/loss percentage for this asset
+- `profit_loss_status`: "positive" or "negative" profit/loss indicator
+- `value_percentage`: Current value as percentage of total portfolio
+- `sell_price`/`buy_price`: Current market prices (for individual stocks only)
+- `avatar_url`: Link to asset/trader profile image
+- `balance_percentage`: Cash balance as percentage of portfolio
 
 ### CSV Format
 
@@ -182,7 +227,41 @@ The-Chameleon                 | 5.46%           | 4.89%          | 0.95%
 name,percentage,value,profit_loss
 AI-Edge,74.53%,77.26%,16.13%
 GoldWorldwide,5.95%,5.48%,3.86%
+balance_percentage,0%
 ```
+
+## ⚠️ Important Limitations
+
+### Anti-Bot Protection
+
+eToro implements sophisticated anti-bot measures including:
+
+- **CAPTCHA challenges**: May appear during scraping attempts
+- **Rate limiting**: Frequent requests may trigger temporary blocks  
+- **Browser fingerprinting**: Detects automated browsing patterns
+- **IP monitoring**: May limit requests from specific IP addresses
+
+### Handling Restrictions
+
+The application includes several strategies to handle these limitations:
+
+1. **CAPTCHA Detection**: Automatically detects when CAPTCHA appears
+2. **Graceful Fallback**: Attempts to extract available data even when restricted
+3. **Browser Simulation**: Uses realistic browser settings and user agents
+4. **Error Recovery**: Provides informative messages about access restrictions
+
+### Expected Behavior
+
+- **Success Rate**: Variable depending on eToro's current anti-bot measures
+- **Data Completeness**: When successful, extracts comprehensive portfolio data
+- **Failure Modes**: May return limited data or access restriction messages
+
+### Best Practices
+
+- **Reasonable Usage**: Avoid rapid successive requests
+- **Profile Accessibility**: Only works with public profiles
+- **Network Stability**: Ensure stable internet connection
+- **Browser Dependencies**: Requires Chrome/Chromium installation
 
 ## 🛠️ Development
 

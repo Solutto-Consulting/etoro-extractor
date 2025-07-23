@@ -14,7 +14,9 @@ A Python CLI application for extracting portfolio data from eToro public profile
 ## 📋 Prerequisites
 
 - Python 3.8 or later
-- Google Chrome or Chromium browser
+- **Google Chrome or Chromium browser** (required for web scraping)
+  - The installation script will automatically install Google Chrome if needed
+  - **Note**: Broken snap packages of Chromium will be detected and bypassed
 - Linux/macOS/Windows with bash support
 
 ## 🔧 Installation
@@ -34,6 +36,7 @@ This will:
 - Install the application to `/opt/etoro-extractor`
 - Create a system-wide `etoro` command
 - Set up the virtual environment and dependencies
+- **Automatically install Google Chrome if not present or if Chromium is broken**
 - Create configuration files
 
 ### Method 2: Manual Installation
@@ -323,10 +326,37 @@ flake8 src/ tests/
 
 ### Common Issues
 
-1. **Chrome not found**: Install Google Chrome or Chromium browser
-2. **Permission denied**: Run installation script with `sudo`
-3. **Profile not found**: Check if the username is correct and profile is public
-4. **Timeout errors**: Increase `BROWSER_TIMEOUT` in `.env` file
+#### 1. Chrome Installation Problems
+
+**Problem**: Chrome not found or broken Chromium snap package
+```bash
+Error: Could not start Chrome browser
+```
+
+**Solutions**:
+- **Automatic**: The installation script now handles this automatically
+- **Manual Google Chrome installation**:
+  ```bash
+  # Add Google's official GPG key
+  curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-keyring.gpg
+  
+  # Add Google Chrome repository
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+  
+  # Install Google Chrome
+  sudo apt-get update && sudo apt-get install -y google-chrome-stable
+  ```
+- **Remove broken Chromium snap** (if needed):
+  ```bash
+  sudo snap remove chromium
+  ```
+
+#### 2. Other Common Issues
+
+1. **Permission denied**: Run installation script with `sudo`
+2. **Profile not found**: Check if the username is correct and profile is public
+3. **Timeout errors**: Increase `BROWSER_TIMEOUT` in `.env` file
+4. **CAPTCHA challenges**: eToro may show CAPTCHA - this is expected behavior
 
 ### Debug Mode
 

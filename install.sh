@@ -45,10 +45,50 @@ fi
 
 # Check if Chrome is installed (for Selenium)
 echo -e "${YELLOW}Checking Chrome installation...${NC}"
-if ! command -v google-chrome &> /dev/null && ! command -v chromium-browser &> /dev/null; then
-    echo -e "${YELLOW}Chrome/Chromium not found. Installing chromium-browser...${NC}"
+
+# Function to install Google Chrome from official repository
+install_google_chrome() {
+    echo -e "${YELLOW}Installing Google Chrome from official repository...${NC}"
+    
+    # Download and add Google's official GPG key
+    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-keyring.gpg
+    
+    # Add Google Chrome repository
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+    
+    # Update package list
     apt-get update
-    apt-get install -y chromium-browser
+    
+    # Install Google Chrome
+    apt-get install -y google-chrome-stable
+    
+    echo -e "${GREEN}Google Chrome installed successfully${NC}"
+}
+
+# Check for existing Chrome installations
+if command -v google-chrome &> /dev/null; then
+    echo -e "${GREEN}Google Chrome found${NC}"
+elif command -v google-chrome-stable &> /dev/null; then
+    echo -e "${GREEN}Google Chrome (stable) found${NC}"
+elif command -v chromium-browser &> /dev/null; then
+    # Check if chromium-browser is working (not a broken snap)
+    if chromium-browser --version &> /dev/null; then
+        echo -e "${GREEN}Chromium browser found and working${NC}"
+    else
+        echo -e "${YELLOW}Chromium browser found but appears to be broken (likely snap). Installing Google Chrome...${NC}"
+        install_google_chrome
+    fi
+elif command -v chromium &> /dev/null; then
+    # Check if chromium is working
+    if chromium --version &> /dev/null; then
+        echo -e "${GREEN}Chromium found and working${NC}"
+    else
+        echo -e "${YELLOW}Chromium found but appears to be broken. Installing Google Chrome...${NC}"
+        install_google_chrome
+    fi
+else
+    echo -e "${YELLOW}No Chrome/Chromium found. Installing Google Chrome...${NC}"
+    install_google_chrome
 fi
 
 # Create installation directory

@@ -17,6 +17,39 @@ SHELL_RC=""
 echo -e "${GREEN}eToro Extractor - User Installation${NC}"
 echo "====================================="
 
+# Check if Chrome is available
+echo -e "${YELLOW}Checking Chrome installation...${NC}"
+if command -v google-chrome &> /dev/null; then
+    echo -e "${GREEN}Google Chrome found${NC}"
+elif command -v google-chrome-stable &> /dev/null; then
+    echo -e "${GREEN}Google Chrome (stable) found${NC}"
+elif command -v chromium-browser &> /dev/null; then
+    if chromium-browser --version &> /dev/null; then
+        echo -e "${GREEN}Chromium browser found and working${NC}"
+    else
+        echo -e "${RED}Chromium browser found but appears to be broken (likely snap)${NC}"
+        echo -e "${YELLOW}Please install Google Chrome manually:${NC}"
+        echo "1. wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -"
+        echo "2. sudo sh -c 'echo \"deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main\" >> /etc/apt/sources.list.d/google-chrome.list'"
+        echo "3. sudo apt-get update && sudo apt-get install -y google-chrome-stable"
+    fi
+elif command -v chromium &> /dev/null; then
+    if chromium --version &> /dev/null; then
+        echo -e "${GREEN}Chromium found and working${NC}"
+    else
+        echo -e "${RED}Chromium found but appears to be broken${NC}"
+        echo -e "${YELLOW}Please install Google Chrome manually (see above commands)${NC}"
+    fi
+else
+    echo -e "${RED}No Chrome/Chromium found${NC}"
+    echo -e "${YELLOW}Please install Google Chrome:${NC}"
+    echo "1. wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -"
+    echo "2. sudo sh -c 'echo \"deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main\" >> /etc/apt/sources.list.d/google-chrome.list'"
+    echo "3. sudo apt-get update && sudo apt-get install -y google-chrome-stable"
+    echo ""
+    echo -e "${YELLOW}Continuing with installation anyway...${NC}"
+fi
+
 # Detect the user's shell
 if [[ -n "$ZSH_VERSION" ]]; then
     SHELL_RC="$HOME/.zshrc"

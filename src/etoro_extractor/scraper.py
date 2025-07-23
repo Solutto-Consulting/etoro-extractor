@@ -2,6 +2,7 @@
 Web scraper module for extracting data from eToro using Selenium.
 """
 
+import os
 import time
 import logging
 from typing import Optional, Dict, Any
@@ -32,13 +33,43 @@ class EToroScraper:
         chrome_options = Options()
         
         if self.config.browser_headless:
-            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--headless=new")
         
+        # Essential arguments for headless Chrome in various environments
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-software-rasterizer")
+        chrome_options.add_argument("--disable-background-timer-throttling")
+        chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+        chrome_options.add_argument("--disable-renderer-backgrounding")
+        chrome_options.add_argument("--disable-features=TranslateUI")
+        chrome_options.add_argument("--disable-ipc-flooding-protection")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-plugins")
+        chrome_options.add_argument("--disable-images")
+        # Note: Don't disable JavaScript as eToro needs it
+        chrome_options.add_argument("--remote-debugging-port=0")
         chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        
+        # Set additional preferences
+        prefs = {
+            "profile.default_content_setting_values": {
+                "notifications": 2,
+                "media_stream": 2,
+            },
+            "profile.managed_default_content_settings": {
+                "images": 2
+            }
+        }
+        chrome_options.add_experimental_option("prefs", prefs)
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         
         try:
             service = Service(ChromeDriverManager().install())
@@ -46,7 +77,49 @@ class EToroScraper:
             self.driver.implicitly_wait(10)
         except Exception as e:
             logger.error(f"Failed to setup Chrome driver: {e}")
-            raise
+            
+            # Try alternative approaches
+            logger.info("Trying alternative Chrome setup...")
+            
+            # Try with different Chrome binary locations
+            chrome_paths = [
+                "/usr/bin/google-chrome",
+                "/usr/bin/google-chrome-stable", 
+                "/usr/bin/chromium-browser",
+                "/usr/bin/chromium",
+                "/snap/bin/chromium"
+            ]
+            
+            for chrome_path in chrome_paths:
+                if os.path.exists(chrome_path):
+                    logger.info(f"Trying Chrome binary at: {chrome_path}")
+                    chrome_options.binary_location = chrome_path
+                    try:
+                        service = Service(ChromeDriverManager().install())
+                        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                        self.driver.implicitly_wait(10)
+                        logger.info(f"Successfully started Chrome with binary: {chrome_path}")
+                        return
+                    except Exception as inner_e:
+                        logger.warning(f"Failed with {chrome_path}: {inner_e}")
+                        continue
+            
+            # If all else fails, try with minimal options
+            logger.info("Trying minimal Chrome options...")
+            minimal_options = Options()
+            minimal_options.add_argument("--headless=new")
+            minimal_options.add_argument("--no-sandbox")
+            minimal_options.add_argument("--disable-dev-shm-usage")
+            
+            try:
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=minimal_options)
+                self.driver.implicitly_wait(10)
+                logger.info("Successfully started Chrome with minimal options")
+                return
+            except Exception as final_e:
+                logger.error(f"All Chrome setup attempts failed: {final_e}")
+                raise RuntimeError("Could not start Chrome browser. Please ensure Chrome/Chromium is properly installed.")
     
     def __enter__(self):
         """Context manager entry."""
@@ -95,31 +168,101 @@ class EToroScraper:
             
             # Try to find and click portfolio tab
             try:
-                # Look for portfolio tab/section
+                # Wait a bit for the page to fully load
+                time.sleep(5)
+                
+                # Check if there's a CAPTCHA present
+                captcha_selectors = [
+                    "iframe[src*='captcha']",
+                    ".captcha",
+                    "#captcha",
+                    "[class*='captcha']"
+                ]
+                
+                captcha_present = False
+                for selector in captcha_selectors:
+                    try:
+                        captcha_element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                        if captcha_element.is_displayed():
+                            logger.warning("CAPTCHA detected on the page. Portfolio extraction may be limited.")
+                            captcha_present = True
+                            break
+                    except:
+                        continue
+                
+                if captcha_present:
+                    logger.info("Attempting to extract data despite CAPTCHA presence...")
+                    # Try to wait for CAPTCHA to disappear or timeout
+                    for i in range(6):  # Wait up to 30 seconds
+                        time.sleep(5)
+                        try:
+                            # Check if CAPTCHA is still present
+                            still_present = False
+                            for selector in captcha_selectors:
+                                try:
+                                    captcha_element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                                    if captcha_element.is_displayed():
+                                        still_present = True
+                                        break
+                                except:
+                                    continue
+                            
+                            if not still_present:
+                                logger.info("CAPTCHA appears to have cleared")
+                                break
+                        except:
+                            break
+                    
+                # Look for portfolio tab/section - try multiple approaches
                 portfolio_selectors = [
+                    "a[href*='portfolio']",
                     "[data-etoro-automation-id='portfolio-tab']",
                     "button[aria-label*='Portfolio']",
-                    "a[href*='portfolio']",
                     ".portfolio-tab",
-                    "[class*='portfolio']"
+                    "[class*='portfolio']",
+                    "a[automation-id*='portfolio']",
+                    ".et-tab[href*='portfolio']"
                 ]
                 
                 portfolio_element = None
                 for selector in portfolio_selectors:
                     try:
-                        portfolio_element = WebDriverWait(self.driver, 5).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-                        )
-                        break
-                    except TimeoutException:
+                        elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                        for element in elements:
+                            if element.is_displayed() and element.is_enabled():
+                                portfolio_element = element
+                                logger.info(f"Found portfolio element with selector: {selector}")
+                                break
+                        if portfolio_element:
+                            break
+                    except Exception as e:
+                        logger.debug(f"Selector {selector} failed: {e}")
                         continue
                 
                 if portfolio_element:
-                    portfolio_element.click()
-                    time.sleep(3)  # Wait for content to load
+                    try:
+                        # Scroll to element first
+                        self.driver.execute_script("arguments[0].scrollIntoView(true);", portfolio_element)
+                        time.sleep(2)
+                        
+                        # Try to click
+                        portfolio_element.click()
+                        logger.info("Successfully clicked portfolio tab")
+                        time.sleep(5)  # Wait for portfolio content to load
+                    except Exception as click_error:
+                        logger.warning(f"Could not click portfolio tab: {click_error}")
+                        # Try JavaScript click as fallback
+                        try:
+                            self.driver.execute_script("arguments[0].click();", portfolio_element)
+                            logger.info("Successfully clicked portfolio tab using JavaScript")
+                            time.sleep(5)
+                        except Exception as js_error:
+                            logger.warning(f"JavaScript click also failed: {js_error}")
+                else:
+                    logger.warning("No portfolio tab found, will try to extract from current page")
                 
             except Exception as e:
-                logger.warning(f"Could not click portfolio tab: {e}")
+                logger.warning(f"Error handling portfolio tab: {e}")
             
             # Extract portfolio data from the page
             return self._extract_portfolio_from_page()

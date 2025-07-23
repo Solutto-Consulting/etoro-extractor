@@ -54,11 +54,24 @@ fi
 # Create installation directory
 echo -e "${YELLOW}Creating installation directory...${NC}"
 mkdir -p "$INSTALL_DIR"
-cd "$INSTALL_DIR"
+
+# Get the source directory (where the script is located)
+SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Copy application files
 echo -e "${YELLOW}Copying application files...${NC}"
-cp -r "$(dirname "$0")"/* "$INSTALL_DIR/"
+# Copy specific files and directories, excluding .git, venv, and other development files
+cp "$SOURCE_DIR"/*.py "$INSTALL_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR"/*.sh "$INSTALL_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR"/*.txt "$INSTALL_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR"/*.md "$INSTALL_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR"/Makefile "$INSTALL_DIR/" 2>/dev/null || true
+cp "$SOURCE_DIR"/.env.example "$INSTALL_DIR/" 2>/dev/null || true
+cp -r "$SOURCE_DIR"/src "$INSTALL_DIR/" 2>/dev/null || true
+cp -r "$SOURCE_DIR"/tests "$INSTALL_DIR/" 2>/dev/null || true
+
+# Change to installation directory
+cd "$INSTALL_DIR"
 
 # Create virtual environment
 echo -e "${YELLOW}Setting up Python virtual environment...${NC}"

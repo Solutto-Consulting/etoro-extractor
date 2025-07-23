@@ -23,7 +23,7 @@ A Python CLI application for extracting portfolio data from eToro public profile
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/etoro-extractor.git
+git clone git@github.com:Solutto-Consulting/etoro-extractor.git
 cd etoro-extractor
 
 # Run the installation script (requires sudo for system-wide installation)
@@ -40,7 +40,7 @@ This will:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/etoro-extractor.git
+git clone git@github.com:Solutto-Consulting/etoro-extractor.git
 cd etoro-extractor
 
 # Create virtual environment

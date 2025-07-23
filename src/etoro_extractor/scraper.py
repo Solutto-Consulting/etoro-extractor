@@ -49,8 +49,9 @@ class EToroScraper:
         chrome_options.add_argument("--disable-features=VizDisplayCompositor")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-plugins")
-        chrome_options.add_argument("--disable-images")
-        # Note: Don't disable JavaScript as eToro needs it
+        # Don't disable images as we need to see portfolio avatars and data
+        # chrome_options.add_argument("--disable-images")
+        # Don't disable JavaScript as eToro is a SPA that requires JS
         chrome_options.add_argument("--remote-debugging-port=0")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--start-maximized")
@@ -276,7 +277,7 @@ class EToroScraper:
     
     def _extract_portfolio_from_page(self) -> Dict[str, Any]:
         """
-        Extract portfolio information from the current page.
+        Extract portfolio information from the current page using eToro-specific selectors.
         
         Returns:
             Dictionary containing extracted portfolio data
@@ -285,7 +286,8 @@ class EToroScraper:
             "user": None,
             "last_updated": None,
             "total_assets": 0,
-            "assets": []
+            "assets": [],
+            "balance_percentage": None
         }
         
         try:
@@ -293,76 +295,60 @@ class EToroScraper:
             page_source = self.driver.page_source
             soup = BeautifulSoup(page_source, 'html.parser')
             
-            # Extract username from page
-            username_selectors = [
-                ".username",
-                "[data-etoro-automation-id='people-avatar-name']",
-                ".people-header h1",
-                "h1"
-            ]
+            # Extract username from URL or page elements
+            current_url = self.driver.current_url
+            if '/people/' in current_url:
+                username_match = current_url.split('/people/')[1].split('/')[0]
+                portfolio_data["user"] = username_match
             
-            for selector in username_selectors:
-                username_element = soup.select_one(selector)
-                if username_element:
-                    portfolio_data["user"] = username_element.get_text(strip=True)
-                    break
+            # Look for last updated date
+            update_element = soup.select_one("[sub-head] .et-color-dark-grey")
+            if update_element:
+                update_text = update_element.get_text(strip=True)
+                if "Last updated on:" in update_text:
+                    portfolio_data["last_updated"] = update_text.replace("Last updated on:", "").strip()
             
-            # Look for portfolio items/assets
-            asset_selectors = [
-                ".portfolio-item",
-                ".investment-item",
-                "[class*='portfolio'] [class*='item']",
-                ".table-row",
-                "tr[data-etoro-automation-id*='portfolio']"
-            ]
-            
+            # Extract portfolio items using eToro-specific selectors
+            portfolio_rows = soup.select(".et-table-row.clickable-row")
             assets = []
-            for selector in asset_selectors:
-                asset_elements = soup.select(selector)
-                if asset_elements:
-                    for element in asset_elements:
-                        asset_info = self._extract_asset_info(element)
-                        if asset_info:
-                            assets.append(asset_info)
-                    break
             
-            # If no assets found with specific selectors, try to find any investment-related content
-            if not assets:
-                # Look for any text that might indicate assets/investments
-                text_content = soup.get_text()
-                if any(term in text_content.lower() for term in ['invested', 'portfolio', 'assets', 'stocks']):
-                    # Try to extract basic information from visible text
-                    assets = self._extract_assets_from_text(text_content)
+            logger.info(f"Found {len(portfolio_rows)} portfolio rows")
+            
+            for row in portfolio_rows:
+                try:
+                    asset_info = self._extract_etoro_asset_info(row)
+                    if asset_info:
+                        assets.append(asset_info)
+                        logger.debug(f"Extracted asset: {asset_info.get('name', 'Unknown')}")
+                except Exception as e:
+                    logger.warning(f"Error extracting asset from row: {e}")
+                    continue
             
             portfolio_data["assets"] = assets
             portfolio_data["total_assets"] = len(assets)
             
-            # Try to find last updated information
-            update_selectors = [
-                ".last-updated",
-                "[class*='update']",
-                ".timestamp"
-            ]
+            # Extract balance percentage
+            balance_element = soup.select_one("[automation-id='cd-public-portfolio-list-balance-label']")
+            if balance_element:
+                balance_parent = balance_element.find_parent()
+                if balance_parent:
+                    balance_value = balance_parent.select_one(".et-font-s")
+                    if balance_value:
+                        portfolio_data["balance_percentage"] = balance_value.get_text(strip=True)
             
-            for selector in update_selectors:
-                update_element = soup.select_one(selector)
-                if update_element:
-                    portfolio_data["last_updated"] = update_element.get_text(strip=True)
-                    break
-            
-            logger.info(f"Extracted {len(assets)} assets from portfolio")
+            logger.info(f"Successfully extracted {len(assets)} assets from portfolio")
             return portfolio_data
             
         except Exception as e:
             logger.error(f"Error extracting portfolio data: {e}")
             return portfolio_data
     
-    def _extract_asset_info(self, element) -> Optional[Dict[str, Any]]:
+    def _extract_etoro_asset_info(self, row_element) -> Optional[Dict[str, Any]]:
         """
-        Extract asset information from a single portfolio item element.
+        Extract asset information from a single eToro portfolio row element.
         
         Args:
-            element: BeautifulSoup element containing asset information
+            row_element: BeautifulSoup element containing the portfolio row
             
         Returns:
             Dictionary with asset information or None
@@ -370,43 +356,84 @@ class EToroScraper:
         try:
             asset_info = {}
             
-            # Extract asset name/symbol
-            name_selectors = [".asset-name", ".symbol", ".instrument-name", "h3", "h4", ".name"]
-            for selector in name_selectors:
-                name_element = element.select_one(selector)
+            # Extract asset name from automation-id selector
+            name_element = row_element.select_one("[automation-id='cd-public-portfolio-table-item-title']")
+            if name_element:
+                asset_info["name"] = name_element.get_text(strip=True)
+            else:
+                # Fallback to other selectors
+                name_element = row_element.select_one(".et-bold-font.ellipsis")
                 if name_element:
                     asset_info["name"] = name_element.get_text(strip=True)
-                    break
             
-            # Extract percentage/allocation
-            percentage_selectors = [".percentage", ".allocation", "[class*='percent']"]
-            for selector in percentage_selectors:
-                pct_element = element.select_one(selector)
-                if pct_element:
-                    asset_info["percentage"] = pct_element.get_text(strip=True)
-                    break
+            # Extract description/company name
+            desc_element = row_element.select_one(".et-color-dark-grey.ellipsis")
+            if desc_element:
+                asset_info["description"] = desc_element.get_text(strip=True)
             
-            # Extract value if available
-            value_selectors = [".value", ".amount", "[class*='value']", "[class*='amount']"]
-            for selector in value_selectors:
-                value_element = element.select_one(selector)
-                if value_element:
-                    asset_info["value"] = value_element.get_text(strip=True)
-                    break
+            # Extract direction (Long/Short) - in the first data cell
+            direction_cell = row_element.select(".et-table-cell")[0] if row_element.select(".et-table-cell") else None
+            if direction_cell:
+                direction_element = direction_cell.select_one(".et-font-weight-normal")
+                if direction_element:
+                    direction = direction_element.get_text(strip=True)
+                    if direction:
+                        asset_info["direction"] = direction
             
-            # Extract P/L if available
-            pl_selectors = [".profit-loss", ".pl", "[class*='profit']", "[class*='loss']"]
-            for selector in pl_selectors:
-                pl_element = element.select_one(selector)
+            # Extract table cells for the data columns
+            table_cells = row_element.select(".et-table-cell")
+            
+            if len(table_cells) >= 4:
+                # Invested percentage (2nd column after direction)
+                invested_cell = table_cells[1]
+                invested_element = invested_cell.select_one(".et-font-weight-normal")
+                if invested_element:
+                    asset_info["invested_percentage"] = invested_element.get_text(strip=True)
+                
+                # P/L percentage (3rd column)
+                pl_cell = table_cells[2] 
+                pl_element = pl_cell.select_one(".et-font-weight-normal")
                 if pl_element:
-                    asset_info["profit_loss"] = pl_element.get_text(strip=True)
-                    break
+                    pl_value = pl_element.get_text(strip=True)
+                    asset_info["profit_loss_percentage"] = pl_value
+                    
+                    # Determine if it's positive or negative based on class
+                    if "et-positive" in pl_element.get("class", []):
+                        asset_info["profit_loss_status"] = "positive"
+                    elif "et-negative" in pl_element.get("class", []):
+                        asset_info["profit_loss_status"] = "negative"
+                
+                # Value percentage (4th column)
+                value_cell = table_cells[3]
+                value_element = value_cell.select_one(".et-font-weight-normal")
+                if value_element:
+                    asset_info["value_percentage"] = value_element.get_text(strip=True)
+                
+                # Extract buy/sell prices if available (last columns)
+                if len(table_cells) >= 6:
+                    # Sell price
+                    sell_cell = table_cells[4]
+                    sell_price_element = sell_cell.select_one("[automation-id='buy-sell-button-rate-value']")
+                    if sell_price_element:
+                        asset_info["sell_price"] = sell_price_element.get_text(strip=True)
+                    
+                    # Buy price
+                    buy_cell = table_cells[5]
+                    buy_price_element = buy_cell.select_one("[automation-id='buy-sell-button-rate-value']")
+                    if buy_price_element:
+                        asset_info["buy_price"] = buy_price_element.get_text(strip=True)
+            
+            # Extract avatar/logo URL if present
+            avatar_element = row_element.select_one("img[automation-id='trade-item-avatar']")
+            if avatar_element and avatar_element.get("src"):
+                asset_info["avatar_url"] = avatar_element["src"]
+                asset_info["alt_text"] = avatar_element.get("alt", "")
             
             # Only return if we have at least a name
             return asset_info if asset_info.get("name") else None
             
         except Exception as e:
-            logger.error(f"Error extracting asset info: {e}")
+            logger.error(f"Error extracting eToro asset info: {e}")
             return None
     
     def _extract_assets_from_text(self, text_content: str) -> list:
@@ -439,3 +466,41 @@ class EToroScraper:
                     })
         
         return assets[:10]  # Limit to first 10 potential matches
+    
+    def _extract_available_data(self) -> Dict[str, Any]:
+        """
+        Extract whatever data is available when full access is restricted.
+        
+        Returns:
+            Dictionary with limited available data
+        """
+        basic_data = {
+            "user": None,
+            "last_updated": None,
+            "total_assets": 0,
+            "assets": [],
+            "access_restricted": True,
+            "message": "Access may be restricted by CAPTCHA or anti-bot measures"
+        }
+        
+        try:
+            # Extract username from URL
+            current_url = self.driver.current_url
+            if '/people/' in current_url:
+                username_match = current_url.split('/people/')[1].split('/')[0]
+                basic_data["user"] = username_match
+            
+            # Try to extract any visible text that might indicate assets
+            page_source = self.driver.page_source
+            soup = BeautifulSoup(page_source, 'html.parser')
+            
+            # Look for any portfolio-related content
+            text_content = soup.get_text()
+            if 'portfolio' in text_content.lower():
+                basic_data["message"] = "Portfolio page detected but content extraction was limited"
+            
+            return basic_data
+            
+        except Exception as e:
+            logger.error(f"Error extracting basic data: {e}")
+            return basic_data

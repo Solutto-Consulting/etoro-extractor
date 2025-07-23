@@ -1,7 +1,80 @@
 {
-  "user": "gilsonrincon1982",
-  "last_updated": null,
-  "total_assets": 0,
-  "assets": [],
-  "balance_percentage": null
+  "user": "johnsmith123",
+  "last_updated": "15/03/2024",
+  "total_assets": 12,
+  "balance_percentage": "5.2%",
+  "assets": [
+    {
+      "name": "TechGrowthFund",
+      "description": "Technology Growth Strategy",
+      "invested_percentage": "35.50%",
+      "profit_loss_percentage": "12.45%",
+      "profit_loss_status": "positive",
+      "value_percentage": "38.20%",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/avatars/150X150/12345678/1.jpg",
+      "alt_text": "TechGrowthFund"
+    },
+    {
+      "name": "CryptoTrader99",
+      "description": "Cryptocurrency Trading Expert",
+      "invested_percentage": "18.75%",
+      "profit_loss_percentage": "22.15%",
+      "profit_loss_status": "positive",
+      "value_percentage": "21.30%",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/avatars/150X150/87654321/2.jpg",
+      "alt_text": "CryptoTrader99"
+    },
+    {
+      "name": "AAPL",
+      "description": "Apple Inc",
+      "direction": "Long",
+      "invested_percentage": "15.30%",
+      "profit_loss_percentage": "8.76%",
+      "profit_loss_status": "positive",
+      "value_percentage": "16.85%",
+      "sell_price": "182.50",
+      "buy_price": "182.75",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/116/116_000000_F7F7F7.svg",
+      "alt_text": "AAPL"
+    },
+    {
+      "name": "BTC",
+      "description": "Bitcoin",
+      "direction": "Long",
+      "invested_percentage": "12.80%",
+      "profit_loss_percentage": "-3.25%",
+      "profit_loss_status": "negative",
+      "value_percentage": "11.95%",
+      "sell_price": "42150.00",
+      "buy_price": "42250.00",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/5/5_FFA500_000000.svg",
+      "alt_text": "BTC"
+    },
+    {
+      "name": "TSLA",
+      "description": "Tesla, Inc",
+      "direction": "Long",
+      "invested_percentage": "8.90%",
+      "profit_loss_percentage": "-1.45%",
+      "profit_loss_status": "negative",
+      "value_percentage": "8.20%",
+      "sell_price": "248.75",
+      "buy_price": "249.25",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/2057/2057_CC0000_F7F7F7.svg",
+      "alt_text": "TSLA"
+    },
+    {
+      "name": "GOOGL",
+      "description": "Alphabet Inc Class A",
+      "direction": "Long",
+      "invested_percentage": "6.45%",
+      "profit_loss_percentage": "4.32%",
+      "profit_loss_status": "positive",
+      "value_percentage": "6.85%",
+      "sell_price": "138.90",
+      "buy_price": "139.15",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/985/985_4285F4_F7F7F7.svg",
+      "alt_text": "GOOGL"
+    }
+  ]
 }

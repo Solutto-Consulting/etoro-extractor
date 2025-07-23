@@ -16,7 +16,7 @@ help:
 	@echo "Examples:"
 	@echo "  make install"
 	@echo "  make test"
-	@echo "  make run ARGS='portfolio --user gilsonrincon1982'"
+	@echo "  make run ARGS='portfolio --user johnsmith123'"
 
 # Activate virtual environment for all commands
 VENV = . venv/bin/activate &&

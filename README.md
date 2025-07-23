@@ -104,18 +104,18 @@ etoro --help
 etoro portfolio --help
 
 # Extract portfolio for a specific user
-etoro portfolio --user usertest123
+etoro portfolio --user johnsmith123
 
 # Extract portfolio using default user from .env
 etoro portfolio
 
 # Save results to a file
-etoro portfolio --user gilsonrincon1982 --save portfolio.json
+etoro portfolio --user johnsmith123 --save portfolio.json
 
 # Different output formats
-etoro portfolio --user gilsonrincon1982 --output json
-etoro portfolio --user gilsonrincon1982 --output csv
-etoro portfolio --user gilsonrincon1982 --output table  # default
+etoro portfolio --user johnsmith123 --output json
+etoro portfolio --user johnsmith123 --output csv
+etoro portfolio --user johnsmith123 --output table  # default
 ```
 
 ### Manual Execution (Development)
@@ -127,10 +127,10 @@ If you're running the application manually without system installation:
 source venv/bin/activate
 
 # Run with Python
-python etoro.py portfolio --user gilsonrincon1982
+python etoro.py portfolio --user johnsmith123
 
 # Or make it executable and run directly
-./etoro.py portfolio --user gilsonrincon1982
+./etoro.py portfolio --user johnsmith123
 ```
 
 ### Creating System Alias
@@ -150,28 +150,24 @@ source ~/.bashrc  # or source ~/.zshrc
 ### Table Format (Default)
 
 ```
-Portfolio for: gilsonrincon1982
-Total Assets: 16
-Last Updated: 23/07/2025
+Portfolio for: johnsmith123
+Total Assets: 12
+Last Updated: 15/03/2024
 --------------------------------------------------------------------------------
 Asset Name     
 ---------------
-AI-Edge        
-GoldWorldWide  
-The-Chameleon  
-LLY            
-ENGI.PA        
-BKR            
-MC.PA          
-ETOR           
-UNH            
-CNU.ASX        
-MELI           
-RHM.DE         
-CRWD           
-C              
-BG             
-GPRK           
+TechGrowthFund        
+CryptoTrader99  
+Apple-Investor
+AAPL            
+TSLA        
+BTC            
+GOOGL          
+MSFT           
+NVDA            
+SPY        
+GOLD           
+EUR/USD           
 ```
 
 ### JSON Format
@@ -180,33 +176,46 @@ The JSON output provides comprehensive portfolio data:
 
 ```json
 {
-  "user": "gilsonrincon1982",
-  "last_updated": "23/07/2025", 
-  "total_assets": 16,
-  "balance_percentage": "0%",
+  "user": "johnsmith123",
+  "last_updated": "15/03/2024", 
+  "total_assets": 12,
+  "balance_percentage": "5.2%",
   "assets": [
     {
-      "name": "AI-Edge",
-      "description": "AI-Edge Capital Guarantee",
-      "invested_percentage": "74.53%",
-      "profit_loss_percentage": "16.13%",
+      "name": "TechGrowthFund",
+      "description": "Technology Growth Strategy",
+      "invested_percentage": "35.50%",
+      "profit_loss_percentage": "12.45%",
       "profit_loss_status": "positive",
-      "value_percentage": "77.26%",
-      "avatar_url": "https://etoro-cdn.etorostatic.com/avatars/150X150/42731987/1.jpg",
-      "alt_text": "AI-Edge"
+      "value_percentage": "38.20%",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/avatars/150X150/12345678/1.jpg",
+      "alt_text": "TechGrowthFund"
     },
     {
-      "name": "LLY", 
-      "description": "Eli Lilly & Co",
+      "name": "AAPL", 
+      "description": "Apple Inc",
       "direction": "Long",
-      "invested_percentage": "2.43%",
-      "profit_loss_percentage": "-2.28%",
+      "invested_percentage": "15.30%",
+      "profit_loss_percentage": "8.76%",
+      "profit_loss_status": "positive",
+      "value_percentage": "16.85%",
+      "sell_price": "182.50",
+      "buy_price": "182.75",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/116/116_000000_F7F7F7.svg",
+      "alt_text": "AAPL"
+    },
+    {
+      "name": "BTC", 
+      "description": "Bitcoin",
+      "direction": "Long",
+      "invested_percentage": "12.80%",
+      "profit_loss_percentage": "-3.25%",
       "profit_loss_status": "negative",
-      "value_percentage": "2.08%",
-      "sell_price": "775.85",
-      "buy_price": "776.48",
-      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/1567/1567_BB271A_F7F7F7.svg",
-      "alt_text": "LLY"
+      "value_percentage": "11.95%",
+      "sell_price": "42150.00",
+      "buy_price": "42250.00",
+      "avatar_url": "https://etoro-cdn.etorostatic.com/market-avatars/5/5_FFA500_000000.svg",
+      "alt_text": "BTC"
     }
   ]
 }
@@ -228,9 +237,10 @@ The JSON output provides comprehensive portfolio data:
 
 ```csv
 name,percentage,value,profit_loss
-AI-Edge,74.53%,77.26%,16.13%
-GoldWorldwide,5.95%,5.48%,3.86%
-balance_percentage,0%
+TechGrowthFund,35.50%,38.20%,12.45%
+AAPL,15.30%,16.85%,8.76%
+BTC,12.80%,11.95%,-3.25%
+balance_percentage,5.2%
 ```
 
 ## ⚠️ Important Limitations
@@ -363,7 +373,7 @@ Error: Could not start Chrome browser
 Enable debug mode for detailed logging:
 
 ```bash
-etoro --debug portfolio --user username
+etoro --debug portfolio --user johnsmith123
 ```
 
 Or set in `.env`:
